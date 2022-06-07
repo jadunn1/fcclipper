@@ -1,0 +1,4 @@
+Click==7.0
+pyppeteer==1.0.2
+rich==12.4.4
+setuptools==45.2.0
