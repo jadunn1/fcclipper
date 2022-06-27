@@ -1,7 +1,26 @@
 #!/usr/bin/env python3
 import os
+import sys
 from codecs import open
 from setuptools import setup, find_packages
+
+CURRENT_PYTHON = sys.version_info[:2]
+REQUIRED_PYTHON = (3, 7)
+
+if CURRENT_PYTHON < REQUIRED_PYTHON:
+    sys.stderr.write(
+        """
+==========================
+Unsupported Python version
+==========================
+This version of fcclipper requires at least Python {}.{}, but
+you're trying to install it on Python {}.{}. To resolve this,
+consider upgrading to a supported Python version.
+""".format(
+            *(REQUIRED_PYTHON + CURRENT_PYTHON)
+        )
+    )
+    sys.exit(1)
 
 about = {}
 here = os.path.abspath(os.path.dirname(__file__))
