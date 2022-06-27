@@ -5,10 +5,12 @@ import os
 import time
 import gc
 import logging
+from pathlib import Path
 import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from fcclipper import __fcclipper_user_config_dir__
 
 from .libs.memoize import Memoized
 from .api import FoodCityAPI
@@ -19,7 +21,9 @@ LOG = logging.getLogger('FoodCityLogger')
 class FoodCityCLI:
     """ class FoodCityCLI and methods """
     def __init__(self, config_file='config.ini'):
-        self.config_file = config_file
+        if not Path(__fcclipper_user_config_dir__).exists():
+            Path(__fcclipper_user_config_dir__).mkdir(parents=True)
+        self.config_file = os.path.join(Path(__fcclipper_user_config_dir__), config_file)
         self.config = configparser.ConfigParser()
         self.username = None
         self.password = None
