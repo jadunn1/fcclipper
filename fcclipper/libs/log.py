@@ -6,7 +6,6 @@ def setup_richlogging(level=logging.DEBUG):
     """ Setup logging to go to stderr.  """
 
     fmt = '%(message)s'
-    #datefmt = '%m-%d %H:%M:%s'
     datefmt = '%m-%d %H:%M:%S'
 
     formatter = logging.Formatter(fmt=fmt, datefmt=datefmt)
