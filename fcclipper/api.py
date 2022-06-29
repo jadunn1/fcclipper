@@ -103,6 +103,7 @@ class FoodCityAPI:
 
             index = 0
             for index, elem in enumerate(btn, start=1):
+                # pylint: disable=protected-access
                 LOG.debug("Index elem is: %s %s", index, elem._remoteObject['description'])
                 index_span_cliptxt = "{0}".format(re.findall(r"[\w']+", \
                               elem._remoteObject['description'])[1].replace('Coupon','ClipTxt'))
@@ -123,6 +124,7 @@ class FoodCityAPI:
                                        'clipped to your account[/bold]')
                         LOG.error('\nCaught TimeoutError Exception: %s Processing %s',\
                              error, index_span_cliptxt)
+                        await self.destroy()
                         return False
 
                     #if index >= 2:
@@ -135,7 +137,7 @@ class FoodCityAPI:
                                    'your account! :thumbs_up:[/bold]')
 
             if not self.browser_options['headless']:
-                time.sleep(10)
+                time.sleep(3)
 
             await self.destroy()
             return True

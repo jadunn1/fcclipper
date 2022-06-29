@@ -2,6 +2,7 @@
 import logging
 import click
 
+from fcclipper import (__version__,__version_msg__)
 from .libs.log import setup_richlogging
 from .cli import FoodCityCLI
 
@@ -17,6 +18,7 @@ food_city_cli = FoodCityCLI()
 @click.pass_context
 @click.option('--disable-headless', is_flag=True, help='Display browser.')
 @click.option('--debug', '-d', is_flag=True, help='Debug output is logged.')
+@click.version_option(__version__,message=f"%(prog)s  %(version)s\n{__version_msg__}")
 def cli(ctx, disable_headless, debug):
     """
        This program is the unoficial CLI for FoodCity
@@ -58,4 +60,4 @@ def clear_cache():
     food_city_cli.clear_cache()
 
 if __name__ == '__main__':
-    cli()
+    cli() # pylint: disable=no-value-for-parameter
