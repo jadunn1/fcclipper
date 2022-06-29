@@ -16,7 +16,7 @@ food_city_cli = FoodCityCLI()
 @click.group(invoke_without_command=True)
 @click.pass_context
 @click.option('--disable-headless', is_flag=True, help='Display browser.')
-@click.option('--debug', '-d', is_flag=True, help='Debug output displayed.')
+@click.option('--debug', '-d', is_flag=True, help='Debug output is logged.')
 def cli(ctx, disable_headless, debug):
     """
        This program is the unoficial CLI for FoodCity
@@ -36,7 +36,7 @@ def cli(ctx, disable_headless, debug):
         food_city_cli.prompt_options()
 
 
-@click.command('clip-coupons', help='Clip all digital coupons.')
+@cli.command('clip-coupons', help='Clip all digital coupons.')
 @click.option('--dry-run',  is_flag=True, help='No Coupons are clipped.')
 def clip_coupons(dry_run):
     """ Function for option to clip coupons """
@@ -47,18 +47,15 @@ def clip_coupons(dry_run):
     food_city_cli.option_clip_coupons()
 
 
-@click.command('get-fuel-bucks', help='Get Fuel Buck Points Balance.')
+@cli.command('get-fuel-bucks', help='Get Fuel Buck Points Balance.')
 def get_fuel_bucks():
     """ Function for option to retrieve fuel bucks point balance """
     food_city_cli.option_get_fuel_bucks()
 
-@click.command('clear-cache', help='Clear cached items.')
+@cli.command('clear-cache', help='Clear cached items.')
 def clear_cache():
     """ Function for option to clear cached items """
     food_city_cli.clear_cache()
 
 if __name__ == '__main__':
-    cli.add_command(clip_coupons)
-    cli.add_command(get_fuel_bucks)
-    cli.add_command(clear_cache)
     cli()
