@@ -1,3 +1,15 @@
+#!/usr/bin/env python3
 """ Import for fcclipper """
-from .cli import FoodCityCLI
-from .api import FoodCityAPI
+
+from appdirs import AppDirs
+__fcclipper_user_config_dir__ = AppDirs('fcclipper').user_config_dir
+__fcclipper_user_data_dir__ = AppDirs('fcclipper').user_data_dir
+
+from .__version__ import  (
+__title__,
+__description__,
+__version__,
+__url__,
+__license__,
+__author__,
+)

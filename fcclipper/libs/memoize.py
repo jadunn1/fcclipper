@@ -1,8 +1,11 @@
 """ Memoize Module """
 import functools
+import os
 import pickle
 
+from pathlib import Path
 from datetime import datetime, timedelta
+from fcclipper import __fcclipper_user_data_dir__
 
 
 class Memoized():
@@ -11,8 +14,8 @@ class Memoized():
     unless returned value is equal to None
     """
 
-    cache_file = '.cache.pkl'
-    cache_expiration_hours = .016
+    cache_file = os.path.join(Path(__fcclipper_user_data_dir__), '.cache.pkl')
+    cache_expiration_hours = 1
     default_cache = {
         'expire': datetime.now() + timedelta(hours=cache_expiration_hours),
         'data': {}
@@ -58,6 +61,8 @@ class Memoized():
             self.cache = self.default_cache
 
     def _save_cache_file(self):
+        if not Path(__fcclipper_user_data_dir__).exists():
+            Path(__fcclipper_user_data_dir__).mkdir(parents=True)
         with open(self.cache_file, 'wb') as filename:
             pickle.dump(self.cache, filename, pickle.HIGHEST_PROTOCOL)
         filename.close()
