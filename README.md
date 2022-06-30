@@ -10,6 +10,7 @@ $ fcclipper
 ```
 
 ![fcclipper main prompt](ext/fcclipper_main.png  "fcclipper main prompt")
+
 Commands also execute directly through options:
 ```shell
 $ fcclipper --clip-coupons
