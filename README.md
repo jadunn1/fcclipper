@@ -11,11 +11,11 @@ $ fcclipper
 
 ![fcclipper main prompt](ext/fcclipper_main.png  "fcclipper main prompt")
 
-Commands also execute directly through options:
+```fcclipper``` also executes options directly:
 ```shell
 $ fcclipper clip-coupons
 ```
-This allows ```fcclipper``` to be scheduled to run on your OS.
+
 
 A help section is available with the ```--help``` option for all commands:
 
