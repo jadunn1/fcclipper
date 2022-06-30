@@ -7,8 +7,7 @@ $ fcclipper
 ```
 
 ![fcclipper main prompt](ext/fcclipper_main.png  "fcclipper main prompt")
-
-Commands also execute directly through options. 
+Commands also execute directly through options.
 For example:
 ```shell
 $ fcclipper --clip-coupons
