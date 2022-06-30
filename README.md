@@ -1,5 +1,8 @@
 # fcclipper 
-**fcclipper** is an automatic digital coupon clipper for grocery store chain "Food City".  It can be scheduled to run for convience. Current point balances can also be retrieved.
+**fcclipper** is an automatic digital coupon clipper for grocery store chain "Food City".  
+
+- Execution can be scheduled for convience. 
+- Current point balances can also be retrieved.
 ### Usage
 It has a command line interface (CLI) interface via:
 ```console
