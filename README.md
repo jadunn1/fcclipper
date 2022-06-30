@@ -16,7 +16,7 @@ $ fcclipper --clip-coupons
 ```
 This allows ```fcclipper``` to be scheduled to run on your OS.
 
-A help section is available with the ```--help``` option with all commands:
+A help section is available with the ```--help``` option for all commands:
 
 ```console
 $ fcclipper --help
