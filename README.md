@@ -13,7 +13,7 @@ $ fcclipper
 
 Commands also execute directly through options:
 ```shell
-$ fcclipper --clip-coupons
+$ fcclipper clip-coupons
 ```
 This allows ```fcclipper``` to be scheduled to run on your OS.
 
