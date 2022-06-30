@@ -4,14 +4,13 @@
 - Execution can be scheduled for convience. 
 - Current point balances can also be retrieved.
 ### Usage
-It has a command line interface (CLI) interface via:
+A command line interface (CLI) interface is accessible via:
 ```console
 $ fcclipper
 ```
 
 ![fcclipper main prompt](ext/fcclipper_main.png  "fcclipper main prompt")
-Commands also execute directly through options.
-For example:
+Commands also execute directly through options:
 ```shell
 $ fcclipper --clip-coupons
 ```
@@ -49,14 +48,14 @@ Options:
   --help     Show this message and exit.
 ```
 ### Installation
-Python 3.7+ is required to run. If running windows OS use the [Official Python Download](https://www.python.org/downloads/) site to install python.
+Python 3.8+ is required to run. If running windows OS use the [Official Python Download](https://www.python.org/downloads/) site to install python.
 
 The fcclipper code can be downloaded via:
 ```shell
 git clone https://github.com/jadunn1/fcclipper.git
 ```
 
-A virtual environment is not required but can be set up following the  [python venv site](https://docs.python.org/3/library/venv.html)  documentation.
+A virtual environment is not required, but can be set up following the [python venv site](https://docs.python.org/3/library/venv.html)  documentation.
 
 Install fcclipper via:
 
