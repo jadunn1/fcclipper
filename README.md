@@ -1,4 +1,4 @@
-##fcclipper 
+# fcclipper 
 **fcclipper** is an automatic digital coupon clipper for grocery store chain "Food City" and can report current balance.
 
 It has a command line (CLI) interface via:
