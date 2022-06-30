@@ -128,9 +128,9 @@ class FoodCityCLI:
                justify="center", style="dark_orange", no_wrap="True")
         if info:
             for i in range(0, len(info)):
-                mystring = '\n'.join([line.strip() for line in info[i].splitlines() \
+                info_string = '\n'.join([line.strip() for line in info[i].splitlines() \
                               if line.strip()])
-                fb_table.add_row(mystring)
+                fb_table.add_row(info_string)
             self.console.print(fb_table)
         else:
             self.console.print("[bold]:X:  Balance is not available[/bold]")
