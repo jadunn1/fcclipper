@@ -103,11 +103,12 @@ class FoodCityAPI:
 
             index = 0
             for index, elem in enumerate(btn, start=1):
-                LOG.debug("Index elem is: %s %s", index, elem.remoteObject['description'])
+                # pylint: disable=protected-access
+                LOG.debug("Index elem is: %s %s", index, elem._remoteObject['description'])
                 index_span_cliptxt = "{0}".format(re.findall(r"[\w']+", \
-                              elem.remoteObject['description'])[1].replace('Coupon','ClipTxt'))
+                              elem._remoteObject['description'])[1].replace('Coupon','ClipTxt'))
                 index_button = "#{0}".format(re.findall(r"[\w']+", \
-                                   elem.remoteObject['description'])[1])
+                                   elem._remoteObject['description'])[1])
                 self.cli.console.print("Coupon Button: ", index_button)
 
                 if not self.dry_run:
