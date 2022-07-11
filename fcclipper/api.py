@@ -6,6 +6,7 @@ import re
 from pyppeteer.errors import ElementHandleError
 from pyppeteer import launch
 
+from fcclipper import __fcclipper_user_data_dir__
 from .libs.memoize import Memoized
 
 
@@ -16,8 +17,7 @@ class FoodCityAPI:
     dry_run = False
     browser_options = {
         'headless': True,
-        'userDataDir': '.user-data',
-        'slowMo': 0,
+        'userDataDir': __fcclipper_user_data_dir__,
         'args': ['--blink-settings=imagesEnabled=false',  # Disable images for faster load-time
                  '--no-sandbox']
     }
@@ -103,12 +103,11 @@ class FoodCityAPI:
 
             index = 0
             for index, elem in enumerate(btn, start=1):
-                # pylint: disable=protected-access
-                LOG.debug("Index elem is: %s %s", index, elem._remoteObject['description'])
+                LOG.debug("Index elem is: %s %s", index, elem.remoteObject['description'])
                 index_span_cliptxt = "{0}".format(re.findall(r"[\w']+", \
-                              elem._remoteObject['description'])[1].replace('Coupon','ClipTxt'))
+                              elem.remoteObject['description'])[1].replace('Coupon','ClipTxt'))
                 index_button = "#{0}".format(re.findall(r"[\w']+", \
-                                   elem._remoteObject['description'])[1])
+                                   elem.remoteObject['description'])[1])
                 self.cli.console.print("Coupon Button: ", index_button)
 
                 if not self.dry_run:

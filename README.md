@@ -1,8 +1,10 @@
 # fcclipper 
 **fcclipper** is an automatic digital coupon clipper for grocery store chain "Food City".  
 
+- All digital coupons can be added to your account.
+- Current point balances can be retrieved.
 - Execution can be scheduled for convience (through your OS).
-- Current point balances can also be retrieved.
+
 ### Usage
 A command line interface (CLI) interface is accessible via:
 ```console
@@ -56,7 +58,7 @@ The fcclipper code can be downloaded via:
 git clone https://github.com/jadunn1/fcclipper.git
 ```
 
-A virtual environment is not required, but can be set up following the [python venv site](https://docs.python.org/3/library/venv.html)  documentation.
+A virtual environment is not required, but is recommended and can be set up following the [python venv site](https://docs.python.org/3/library/venv.html)  documentation.
 
 Install fcclipper via:
 
