@@ -32,7 +32,6 @@ class FoodCityCLI:
         self.domain = None
         self.console = Console()
         self.api = FoodCityAPI(self)
-        LOG.debug('In CLI __init__')
         if not os.path.exists(self.config_file):
             self._init_config_file()
         self.config.read(self.config_file)
@@ -48,8 +47,6 @@ class FoodCityCLI:
             self.domain = self.config['main']['domain']
         else:
             self.prompt_credentials()
-        LOG.debug('CLI init username info: %s:%s', \
-                   self.config['main']['username'], self.config['main']['password'])
 
 
     def _init_config_file(self):
@@ -82,7 +79,6 @@ class FoodCityCLI:
         """ set credential variables and call to write configuration file """
         self.username = username
         self.password = password
-        self.domain = 'foodcity.com'
         self.config['main']['username'] = self.username
         self.config['main']['password'] = self.password
         self._write_config_file()
