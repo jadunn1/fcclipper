@@ -187,8 +187,11 @@ class FoodCityAPI:
         return points_balance
 
 
-    async def sign_in_routine(self, contains=['My Account']):
+    async def sign_in_routine(self, contains=None):
         """ Routine to initialize and call sign_in """
+        if contains is None:
+            contains = ['My Account']
+
         LOG.debug('In sign_in_routine')
         LOG.debug('Domain is: %s', self.cli.config['main']['domain'])
 
