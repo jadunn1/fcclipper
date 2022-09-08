@@ -6,6 +6,7 @@ import re
 from pyppeteer.errors import ElementHandleError
 from pyppeteer import launch
 
+from fcclipper import __fcclipper_user_data_dir__
 from .libs.memoize import Memoized
 
 
@@ -16,8 +17,7 @@ class FoodCityAPI:
     dry_run = False
     browser_options = {
         'headless': True,
-        'userDataDir': '.user-data',
-        'slowMo': 0,
+        'userDataDir': __fcclipper_user_data_dir__,
         'args': ['--blink-settings=imagesEnabled=false',  # Disable images for faster load-time
                  '--no-sandbox']
     }
@@ -190,7 +190,7 @@ class FoodCityAPI:
     async def sign_in_routine(self, contains=None):
         """ Routine to initialize and call sign_in """
         if contains is None:
-            contains = ['Profile Information']
+            contains = ['My Account']
 
         LOG.debug('In sign_in_routine')
         LOG.debug('Domain is: %s', self.cli.config['main']['domain'])

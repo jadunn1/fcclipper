@@ -10,7 +10,7 @@ import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from fcclipper import __fcclipper_user_config_dir__
+from fcclipper import __fcclipper_user_config_dir__, __fcclipper_user_data_dir__
 
 from .libs.memoize import Memoized
 from .api import FoodCityAPI
@@ -21,6 +21,8 @@ LOG = logging.getLogger('FoodCityLogger')
 class FoodCityCLI:
     """ class FoodCityCLI and methods """
     def __init__(self, config_file='config.ini'):
+        if not Path(__fcclipper_user_data_dir__).exists():
+            Path(__fcclipper_user_data_dir__).mkdir(parents=True)
         if not Path(__fcclipper_user_config_dir__).exists():
             Path(__fcclipper_user_config_dir__).mkdir(parents=True)
         self.config_file = os.path.join(Path(__fcclipper_user_config_dir__), config_file)
@@ -30,7 +32,6 @@ class FoodCityCLI:
         self.domain = None
         self.console = Console()
         self.api = FoodCityAPI(self)
-        LOG.debug('In CLI __init__')
         if not os.path.exists(self.config_file):
             self._init_config_file()
         self.config.read(self.config_file)
@@ -46,8 +47,6 @@ class FoodCityCLI:
             self.domain = self.config['main']['domain']
         else:
             self.prompt_credentials()
-        LOG.debug('CLI init username info: %s:%s', \
-                   self.config['main']['username'], self.config['main']['password'])
 
 
     def _init_config_file(self):
@@ -80,7 +79,6 @@ class FoodCityCLI:
         """ set credential variables and call to write configuration file """
         self.username = username
         self.password = password
-        self.domain = 'foodcity.com'
         self.config['main']['username'] = self.username
         self.config['main']['password'] = self.password
         self._write_config_file()
