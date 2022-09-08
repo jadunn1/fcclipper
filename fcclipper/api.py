@@ -244,7 +244,7 @@ class FoodCityAPI:
             xpath_values = await self.page.Jx(xpath)
             first_xpath_val = await (await xpath_values[0].getProperty(xproperty)).jsonValue()
         except (IndexError) as error:
-            LOG.debug('Number exception %s', error)
+            LOG.debug('Index exception %s', error)
             first_xpath_val = None
 
         return first_xpath_val
