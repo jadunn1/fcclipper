@@ -238,8 +238,8 @@ class FoodCityAPI:
 
 
     async def get_first_xpath_property(self,xpath,xproperty):
-        """ get first occurence of xpath property or return None """
-        LOG.debug('xpath is: %s xproperty is: %s', xpath, xproperty)
+        """ get and return first occurence of xpath property or return None """
+        LOG.debug('xpath is: %s xproperty is: %s', xpath.replace("[","\\["), xproperty)
         try:
             xpath_values = await self.page.Jx(xpath)
             first_xpath_val = await (await xpath_values[0].getProperty(xproperty)).jsonValue()
