@@ -38,7 +38,8 @@ class FoodCityAPI:
     async def init(self):
         """ Function init for inititalizing browser, page and headers """
         self.browser = await launch(self.browser_options)
-        self.page = await self.browser.newPage()
+        context = await self.browser.createIncognitoBrowserContext()
+        self.page = await context.newPage()
         await self.page.setExtraHTTPHeaders(self.headers)
         await self.page.setViewport({'width': 700, 'height': 0})
 
