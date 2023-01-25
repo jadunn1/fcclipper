@@ -38,7 +38,8 @@ class FoodCityAPI:
     async def init(self):
         """ Function init for inititalizing browser, page and headers """
         self.browser = await launch(self.browser_options)
-        self.page = await self.browser.newPage()
+        context = await self.browser.createIncognitoBrowserContext()
+        self.page = await context.newPage()
         await self.page.setExtraHTTPHeaders(self.headers)
         await self.page.setViewport({'width': 700, 'height': 0})
 
@@ -63,21 +64,20 @@ class FoodCityAPI:
             await self.destroy()
             return None
 
-        await self.page.goto('https://www.' + self.cli.domain + '/coupons/mycoupons', \
-            {"waitUntil": "networkidle0"})
+        self.cli.console.print('[italic]Retrieving coupons...[/italic]')
+        with self.cli.console.status("[italic](please wait)...[/italic]", spinner='moon'):
+            await self.page.goto('https://www.' + self.cli.domain + '/coupons/mycoupons', \
+                {"waitUntil": "networkidle0"})
 
+            # Display Available Coupon Count
+            available_coupon_count = await self.get_first_xpath_property \
+                    ("//button[contains(., 'Available Coupons')]", 'textContent') or "0"
+            self.cli.console.print(' '.join((available_coupon_count.strip()).split()))
 
-        # Display Available Coupon Count
-        available_coupons_count = await self.page.Jx("//button[contains(., 'Available Coupons')]")
-        available_coupon_count = await (await available_coupons_count[0].getProperty \
-                                     ('textContent')).jsonValue()
-        self.cli.console.print(' '.join((available_coupon_count.strip()).split()))
-
-        # Display Loaded Coupon Count
-        loaded_coupons_count = await self.page.Jx("//button[contains(., 'Loaded Coupons')]")
-        loaded_coupon_count = await (await loaded_coupons_count[0].getProperty \
-                                  ('textContent')).jsonValue()
-        self.cli.console.print(' '.join((loaded_coupon_count.strip()).split()))
+            # Display Loaded Coupon Count
+            loaded_coupon_count = await self.get_first_xpath_property \
+                    ("//button[contains(., 'Loaded Coupons')]", 'textContent') or "0"
+            self.cli.console.print(' '.join((loaded_coupon_count.strip()).split()))
 
         # Clip Coupons
         if self.dry_run:
@@ -86,16 +86,20 @@ class FoodCityAPI:
         self.cli.console.print('[italic]Clipping coupons...[/italic]')
 
         with self.cli.console.status("[italic](please wait)...[/italic]", spinner='moon'):
-            while True:
-                # Click Show More to display all available Coupons
-                try:
-                    await self.page.waitForSelector('#showMore')
-                    await self.page.click('#showMore')
-                    await self.page.waitForFunction('document.getElementById \
-                          ("hdnLoadingNextPage").value == "0"')
-                except (ElementHandleError, asyncio.TimeoutError) as error:
-                    LOG.debug('Breaking loop: caught ElementHandle or Timeout Exception: %s', error)
-                    break
+            pagecount =  await self.get_first_xpath_property \
+                    ("//input[@id=\'hdnPageCount\']",'value') or "0"
+
+            if int(pagecount) > 1:
+                while True:
+                    # Click Show More to display all available Coupons
+                    try:
+                        await self.page.waitForSelector('#showMore')
+                        await self.page.click('#showMore')
+                        await self.page.waitForFunction('document.getElementById \
+                              ("hdnLoadingNextPage").value == "0"')
+                    except (ElementHandleError, asyncio.TimeoutError) as error:
+                        LOG.debug('Breaking loop: caught Exception: %s', error)
+                        break
 
             # Clip coupons
             btn = await self.page.Jx("//button[contains(., 'Load to Card') \
@@ -127,9 +131,6 @@ class FoodCityAPI:
                         await self.destroy()
                         return False
 
-                    #if index >= 2:
-                        #break
-
             if self.dry_run:
                 self.cli.console.print('(',index,') [bold]Coupons found! :thumbs_up:[/bold]')
             else:
@@ -137,7 +138,7 @@ class FoodCityAPI:
                                    'your account! :thumbs_up:[/bold]')
 
             if not self.browser_options['headless']:
-                time.sleep(3)
+                time.sleep(2)
 
             await self.destroy()
             return True
@@ -235,3 +236,16 @@ class FoodCityAPI:
                     return False
 
         return True
+
+
+    async def get_first_xpath_property(self,xpath,xproperty):
+        """ get and return first occurence of xpath property or return None """
+        LOG.debug('xpath is: %s xproperty is: %s', xpath.replace("[","\\["), xproperty)
+        try:
+            xpath_values = await self.page.Jx(xpath)
+            first_xpath_val = await (await xpath_values[0].getProperty(xproperty)).jsonValue()
+        except (IndexError) as error:
+            LOG.debug('Index exception %s', error)
+            first_xpath_val = None
+
+        return first_xpath_val
