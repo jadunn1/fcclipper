@@ -84,8 +84,7 @@ set up a cron entry and run in headless mode;
 45 3 * * * /home/$(id -u)/cronjob/myenv/bin/python -m fcclipper -d clip-coupons >> /var/log/fcclipper/fcclipper.log 2>&1 && XDG_RUNTIME_DIR=/run/user/$(id -u) /usr/bin/notify-send -i /home/$(id -u)/.local/share/fcclipper/food-city.jpeg -u normal "fcclipper" "`grep -iE '(loaded coupons)' /var/log/fcclipper/fcclipper.log`"
 ```
 
-set up log rotation
-in /etc/logrotate.d add a file fcclipper
+set up log rotation in /etc/logrotate.d
 ```shell
 sudo bash -c 'cat > /etc/logrotate.d/fcclipper << EOF
 /var/log/fcclipper/fcclipper.log {
