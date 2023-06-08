@@ -72,7 +72,8 @@ python setup.py install
 
 The first execution of ```fcclipper``` will prompt for Food City account credentials.
 
-For automation on LINUX -- example
+### For automation on Linux --example
+
 create directory for logs
 ```shell
 sudo mkdir /var/log/fcclipper && sudo chown $USER:$USER /var/log/fcclipper
