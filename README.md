@@ -95,6 +95,7 @@ sudo bash -c 'cat > /etc/logrotate.d/fcclipper << EOF
        missingok
        notifempty
 }
+
 EOF
 '
 ```
