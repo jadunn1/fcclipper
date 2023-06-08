@@ -87,7 +87,7 @@ set up a cron entry and run in headless mode;
 set up log rotation
 in /etc/logrotate.d add a file fcclipper
 ```shell
-sudo cat > /etc/logrotate.d/fcclipper << EOF
+sudo bash -c 'cat > /etc/logrotate.d/fcclipper << EOF
 /var/log/fcclipper/fcclipper.log {
        rotate 52
        daily
@@ -96,4 +96,5 @@ sudo cat > /etc/logrotate.d/fcclipper << EOF
        notifempty
 }
 EOF
+'
 ```
