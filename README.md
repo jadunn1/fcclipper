@@ -58,7 +58,7 @@ The fcclipper code can be downloaded via:
 git clone https://github.com/jadunn1/fcclipper.git
 ```
 
-A virtual environment is not required, but is recommended and can be set up following the [python venv site](https://docs.python.org/3/library/venv.html)  documentation. --example for POSIX with bash: python -m venv /path/to/new/virtual/environment; source <venv>bin/activate;
+A virtual environment is not required, but is recommended and can be set up following the [python venv site](https://docs.python.org/3/library/venv.html)  documentation. --example for POSIX with bash: python -m venv /path/to/new/virtual/environment; source <venv>/bin/activate;
 
 Install fcclipper via:
 
