@@ -34,6 +34,7 @@ requires = [
     "appdirs~=1.4.4",
     "click~=7.0",
     "pyppeteer~=1.0.2",
+    "pyppeteer-stealth~=2.7.4",
     "rich~=12.4.4",
 ]
 

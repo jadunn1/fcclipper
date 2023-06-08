@@ -5,6 +5,7 @@ import time
 import re
 from pyppeteer.errors import ElementHandleError
 from pyppeteer import launch
+from pyppeteer_stealth import stealth
 
 from fcclipper import __fcclipper_user_data_dir__
 from .libs.memoize import Memoized
@@ -40,6 +41,7 @@ class FoodCityAPI:
         self.browser = await launch(self.browser_options)
         context = await self.browser.createIncognitoBrowserContext()
         self.page = await context.newPage()
+        await stealth(self.page)
         await self.page.setExtraHTTPHeaders(self.headers)
         await self.page.setViewport({'width': 700, 'height': 0})
 

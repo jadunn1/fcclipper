@@ -1,5 +1,6 @@
 Click~=7.0
 pyppeteer~=1.0.2
+pyppeteer-stealth~=2.7.4
 rich~=12.4.4
 appdirs~=1.4.4
 setuptools~=45.2.0
