@@ -65,7 +65,7 @@ Install fcclipper via:
 ```console
 pip install .
 ```
-or if preferred
+or if preferred:
 ```console
 python setup.py install
 ```
