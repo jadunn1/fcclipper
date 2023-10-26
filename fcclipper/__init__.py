@@ -4,6 +4,7 @@
 from appdirs import AppDirs
 __fcclipper_user_config_dir__ = AppDirs('fcclipper').user_config_dir
 __fcclipper_user_data_dir__ = AppDirs('fcclipper').user_data_dir
+__fcclipper_user_log_dir__ = AppDirs('fcclipper').user_log_dir
 
 from .__version__ import  (
 __title__,

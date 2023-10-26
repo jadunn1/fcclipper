@@ -7,8 +7,9 @@ from pyppeteer.errors import ElementHandleError
 from pyppeteer import launch
 from pyppeteer_stealth import stealth
 
-from fcclipper import __fcclipper_user_data_dir__
+from fcclipper import __fcclipper_user_data_dir__, __fcclipper_user_log_dir__
 from .libs.memoize import Memoized
+from .exception.exceptions import FcclipperInternalException
 
 
 LOG = logging.getLogger('FoodCityLogger')
@@ -33,6 +34,8 @@ class FoodCityAPI:
         self.cli: cli.FoodCityCLI = cli
         self.browser = None
         self.page = None
+        self.dialog_dismissed=False
+        self.max_retries=5
         LOG.debug('In API __init__')
 
 
@@ -44,12 +47,116 @@ class FoodCityAPI:
         await stealth(self.page)
         await self.page.setExtraHTTPHeaders(self.headers)
         await self.page.setViewport({'width': 700, 'height': 0})
+        self.page.on('dialog', lambda dialog: asyncio.ensure_future(self.close_dialog(dialog)))
+
+
+    async def close_dialog(self, dialog):
+        """ Close pop-up dialog if search matches """
+        if re.search('There was an error loading the coupon', dialog.message, re.IGNORECASE):
+            LOG.debug('Dismissing dialog')
+            self.dialog_dismissed=True
+            await dialog.dismiss()
 
 
     async def destroy(self):
         """ Close page and browser for cleanup """
         await self.page.close()
         await self.browser.close()
+
+
+    async def display_available_loaded_coupons(self):
+        """ Display loaded and available coupons """
+        # Display Available Coupon Count
+        LOG.debug('In display_available_loaded_coupons')
+        available_coupon_count = await self.get_first_xpath_property \
+                ("//button[contains(., 'Available Coupons')]", 'textContent') or "0"
+        self.cli.console.print(' '.join((available_coupon_count.strip()).split()))
+
+        # Display Loaded Coupon Count
+        loaded_coupon_count = await self.get_first_xpath_property \
+                ("//button[contains(., 'Loaded Coupons')]", 'textContent') or "0"
+        self.cli.console.print(' '.join((loaded_coupon_count.strip()).split()))
+
+
+    async def click_show_more_coupons(self):
+        """ Click page show more button to display all coupons """
+        LOG.debug('in click_show_more_coupons')
+        pagecount =  await self.get_first_xpath_property \
+                ("//input[@id=\'hdnPageCount\']",'value') or "0"
+
+        if int(pagecount) > 1:
+            while True:
+                # Click Show More to display all available Coupons
+                try:
+                    await self.page.waitForSelector('#showMore')
+                    await self.page.click('#showMore')
+                    await self.page.waitForFunction('document.getElementById \
+                          ("hdnLoadingNextPage").value == "0"')
+                except (ElementHandleError, asyncio.TimeoutError) as error:
+                    LOG.debug('Breaking loop: caught Exception: %s', error)
+                    break
+
+
+    async def check_dialog_modal(self):
+        """ Check if dialog modal has error message and dismiss """
+        # pylint: disable=protected-access
+        LOG.debug('in check_dialog_modal')
+        dialog_modal = await self.get_first_xpath_property \
+                ("//div[@id=\'dialogbox\']",'textContent')
+        if not dialog_modal:
+            raise IndexError('dialog_modal dialobbox not Found')
+
+        if re.search('There was an error loading the coupon', dialog_modal, re.IGNORECASE):
+            okay_button_click = await self.page.waitForXPath("//button[@id=\'btn-sys-modal\']")
+            LOG.debug('okay_button_click is: %s',okay_button_click._remoteObject['description'])
+            LOG.error('Check dialog screenshot: %s', __fcclipper_user_log_dir__+'/dialog_modal.png')
+            await self.page.screenshot({'path': __fcclipper_user_log_dir__ + '/dialog_modal.png'})
+            time.sleep(2)
+            await asyncio.gather (
+                    self.page.waitForSelector(okay_button_click._remoteObject['description'],\
+                            {'hidden': True}),
+                    self.page.click(okay_button_click._remoteObject['description']),
+                    )
+            # Raise FcclipperInternalException to stop async tasks immediately
+            raise FcclipperInternalException('Dialog Modal for coupon error occurred.', 102)
+
+
+    async def click_coupon_buttons(self, btn):
+        """ Click coupon buttons and return index (number of buttons
+            clipped or raise error """
+        LOG.debug("in click_coupon_buttons")
+        index = 0
+        for index, elem in enumerate(btn, start=1):
+            # pylint: disable=protected-access
+            LOG.debug("Index elem is: %s %s", index, elem._remoteObject['description'])
+            index_span_cliptxt = "{0}".format(re.findall(r"[\w']+", \
+                          elem._remoteObject['description'])[1].replace('Coupon','ClipTxt'))
+            index_button = "#{0}".format(re.findall(r"[\w']+", \
+                               elem._remoteObject['description'])[1])
+            self.cli.console.print("Coupon Button: ", index_button)
+
+            if not self.dry_run:
+                try:
+                    await asyncio.gather(
+                        self.check_dialog_modal(),
+                        self.page.hover(index_button),
+                        self.page.click(index_button),
+                        self.page.waitForXPath(f"//span[@id=\'{index_span_cliptxt}\' \
+                            and contains(@style, \'display: none\')]"),
+                    )
+                    if self.dialog_dismissed:
+                        LOG.debug("Coupon alert dialog was dismissed")
+                        self.dialog_dismissed = False
+                        time.sleep(2)
+                        raise FcclipperInternalException('Coupon alert dialog' \
+                                'pop-up was dismissed', 101)
+                except (asyncio.TimeoutError, FcclipperInternalException) as error:
+                    self.cli.console.print('(',index-1,') [bold]Coupons successfully ' \
+                                   'clipped to your account[/bold]')
+                    LOG.error('\nCaught Exception: %s Processing %s',\
+                         error, index_span_cliptxt)
+                    raise
+        return index
 
 
     def clip_coupons(self):
@@ -66,84 +173,54 @@ class FoodCityAPI:
             await self.destroy()
             return None
 
-        self.cli.console.print('[italic]Retrieving coupons...[/italic]')
-        with self.cli.console.status("[italic](please wait)...[/italic]", spinner='moon'):
-            await self.page.goto('https://www.' + self.cli.domain + '/coupons/mycoupons', \
-                {"waitUntil": "networkidle0"})
+        num_tries=1
+        while True:
+            self.cli.console.print('[italic]Retrieving coupons...[/italic]')
+            with self.cli.console.status("[italic](please wait)...[/italic]", spinner='moon'):
+                await self.page.goto('https://www.' + self.cli.domain + \
+                        '/coupons/mycoupons', {"waitUntil": ["networkidle0", "domcontentloaded"]})
 
-            # Display Available Coupon Count
-            available_coupon_count = await self.get_first_xpath_property \
-                    ("//button[contains(., 'Available Coupons')]", 'textContent') or "0"
-            self.cli.console.print(' '.join((available_coupon_count.strip()).split()))
+            if num_tries==1:
+                await self.display_available_loaded_coupons()
 
-            # Display Loaded Coupon Count
-            loaded_coupon_count = await self.get_first_xpath_property \
-                    ("//button[contains(., 'Loaded Coupons')]", 'textContent') or "0"
-            self.cli.console.print(' '.join((loaded_coupon_count.strip()).split()))
-
-        # Clip Coupons
-        if self.dry_run:
-            self.cli.console.print('[bold]Dry run NOT[/bold]', end=' ')
-
-        self.cli.console.print('[italic]Clipping coupons...[/italic]')
-
-        with self.cli.console.status("[italic](please wait)...[/italic]", spinner='moon'):
-            pagecount =  await self.get_first_xpath_property \
-                    ("//input[@id=\'hdnPageCount\']",'value') or "0"
-
-            if int(pagecount) > 1:
-                while True:
-                    # Click Show More to display all available Coupons
-                    try:
-                        await self.page.waitForSelector('#showMore')
-                        await self.page.click('#showMore')
-                        await self.page.waitForFunction('document.getElementById \
-                              ("hdnLoadingNextPage").value == "0"')
-                    except (ElementHandleError, asyncio.TimeoutError) as error:
-                        LOG.debug('Breaking loop: caught Exception: %s', error)
-                        break
-
-            # Clip coupons
-            btn = await self.page.Jx("//button[contains(., 'Load to Card') \
-                      and not (contains(@id, 'Modal'))]")
-
-            index = 0
-            for index, elem in enumerate(btn, start=1):
-                # pylint: disable=protected-access
-                LOG.debug("Index elem is: %s %s", index, elem._remoteObject['description'])
-                index_span_cliptxt = "{0}".format(re.findall(r"[\w']+", \
-                              elem._remoteObject['description'])[1].replace('Coupon','ClipTxt'))
-                index_button = "#{0}".format(re.findall(r"[\w']+", \
-                                   elem._remoteObject['description'])[1])
-                self.cli.console.print("Coupon Button: ", index_button)
-
-                if not self.dry_run:
-                    try:
-                        await asyncio.gather(
-                            self.page.hover(index_button),
-                            self.page.click(index_button),
-                            self.page.waitForXPath(f"//span[@id=\'{index_span_cliptxt}\' \
-                                and contains(@style, \'display: none\')]"),
-                        )
-                    except asyncio.TimeoutError as error:
-                        self.cli.console.print('(',index-1,') [bold]Coupons successfully ' \
-                                       'clipped to your account[/bold]')
-                        LOG.error('\nCaught TimeoutError Exception: %s Processing %s',\
-                             error, index_span_cliptxt)
-                        await self.destroy()
-                        return False
-
+            # Clip Coupons
             if self.dry_run:
-                self.cli.console.print('(',index,') [bold]Coupons found! :thumbs_up:[/bold]')
-            else:
-                self.cli.console.print('(',index,') [bold]Coupons successfully clipped to ' \
-                                   'your account! :thumbs_up:[/bold]')
+                self.cli.console.print('[bold]Dry run NOT[/bold]', end=' ')
 
-            if not self.browser_options['headless']:
-                time.sleep(2)
+            self.cli.console.print('[italic]Clipping coupons...[/italic]')
 
-            await self.destroy()
-            return True
+            with self.cli.console.status("[italic](please wait)...[/italic]", spinner='moon'):
+                await self.click_show_more_coupons()
+
+                # Clip coupons
+                btn = await self.page.Jx("//button[contains(., 'Load to Card') \
+                          and not (contains(@id, 'Modal'))]")
+
+                try:
+                    index = await self.click_coupon_buttons(btn)
+                except asyncio.TimeoutError as error:
+                    LOG.debug('Timeout error passed back: %s', error)
+                    break
+                except FcclipperInternalException as error:
+                    LOG.debug('FcclipperInternalException passed back: %s', error)
+                    num_tries+=1
+                    if num_tries > self.max_retries:
+                        break
+                    continue
+
+                if self.dry_run:
+                    self.cli.console.print('(',index,') [bold]Coupons found! :thumbs_up:[/bold]')
+                else:
+                    self.cli.console.print('(',index,') [bold]Coupons successfully clipped to ' \
+                                       'your account! :thumbs_up:[/bold]')
+
+                if not self.browser_options['headless']:
+                    time.sleep(2)
+
+                break
+
+        await self.destroy()
+        return True
 
 
     @Memoized

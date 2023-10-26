@@ -10,7 +10,10 @@ import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from fcclipper import __fcclipper_user_config_dir__, __fcclipper_user_data_dir__
+from fcclipper import (
+        __fcclipper_user_config_dir__, __fcclipper_user_data_dir__,
+        __fcclipper_user_log_dir__
+        )
 
 from .libs.memoize import Memoized
 from .api import FoodCityAPI
@@ -26,6 +29,8 @@ class FoodCityCLI:
         if not Path(__fcclipper_user_config_dir__).exists():
             Path(__fcclipper_user_config_dir__).mkdir(parents=True)
         self.config_file = os.path.join(Path(__fcclipper_user_config_dir__), config_file)
+        if not Path(__fcclipper_user_log_dir__).exists():
+            Path(__fcclipper_user_log_dir__).mkdir(parents=True)
         self.config = configparser.ConfigParser()
         self.username = None
         self.password = None
