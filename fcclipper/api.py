@@ -16,6 +16,7 @@ LOG = logging.getLogger('FoodCityLogger')
 
 class FoodCityAPI:
     """ FoodCityAPI class with methods for getting Fuel Buck points and clipping coupons """
+    # pylint: disable=protected-access
     dry_run = False
     browser_options = {
         'headless': True,
@@ -99,7 +100,6 @@ class FoodCityAPI:
 
     async def check_dialog_modal(self):
         """ Check if dialog modal has error message and dismiss """
-        # pylint: disable=protected-access
         LOG.debug('in check_dialog_modal')
         dialog_modal = await self.get_first_xpath_property \
                 ("//div[@id=\'dialogbox\']",'textContent')
@@ -127,7 +127,6 @@ class FoodCityAPI:
         LOG.debug("in click_coupon_buttons")
         index = 0
         for index, elem in enumerate(btn, start=1):
-            # pylint: disable=protected-access
             LOG.debug("Index elem is: %s %s", index, elem._remoteObject['description'])
             index_span_cliptxt = "{0}".format(re.findall(r"[\w']+", \
                           elem._remoteObject['description'])[1].replace('Coupon','ClipTxt'))
@@ -240,8 +239,14 @@ class FoodCityAPI:
 
         self.cli.console.print('[italic]Getting Balance...[/italic]')
         with self.cli.console.status("[italic](please wait)...[/italic]", spinner='moon'):
-            await self.page.goto('https://www.' + self.cli.domain + \
-                             '/account/dashboard#l-dashboard', {'waitUntil' : 'networkidle0'})
+            fb_dropdown  = await self.page.Jx("//div[@id=\'dropdownMenuButton\']")
+            fb_dropdown_dash = await self.page.Jx("//*[@class=\'dropdown-item\' \
+                    and (contains(., 'My Dashboard'))]")
+            await self.page.click(fb_dropdown[0]._remoteObject['description'])
+            await asyncio.gather(
+                self.page.waitForNavigation({'waitUntil' : ['networkidle0','domcontentloaded']}),
+                self.page.click(fb_dropdown_dash[0]._remoteObject['description']),
+            )
 
         await self.page.waitForSelector(".card-dash__brief")
         await self.page.waitForSelector(".dfac")
