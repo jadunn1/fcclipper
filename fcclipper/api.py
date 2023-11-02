@@ -1,5 +1,6 @@
 """ This module contains API calls to FoodCity """
 import asyncio
+from datetime import datetime
 import logging
 import time
 import re
@@ -9,7 +10,6 @@ from pyppeteer_stealth import stealth
 
 from fcclipper import __fcclipper_user_data_dir__, __fcclipper_user_log_dir__
 from .libs.memoize import Memoized
-from .exception.exceptions import FcclipperInternalException
 
 
 LOG = logging.getLogger('FoodCityLogger')
@@ -35,8 +35,7 @@ class FoodCityAPI:
         self.cli: cli.FoodCityCLI = cli
         self.browser = None
         self.page = None
-        self.dialog_dismissed=False
-        self.max_retries=5
+        self.max_tries=5
         LOG.debug('In API __init__')
 
 
@@ -48,15 +47,6 @@ class FoodCityAPI:
         await stealth(self.page)
         await self.page.setExtraHTTPHeaders(self.headers)
         await self.page.setViewport({'width': 700, 'height': 0})
-        self.page.on('dialog', lambda dialog: asyncio.ensure_future(self.close_dialog(dialog)))
-
-
-    async def close_dialog(self, dialog):
-        """ Close pop-up dialog if search matches """
-        if re.search('There was an error loading the coupon', dialog.message, re.IGNORECASE):
-            LOG.debug('Dismissing dialog')
-            self.dialog_dismissed=True
-            await dialog.dismiss()
 
 
     async def destroy(self):
@@ -102,28 +92,27 @@ class FoodCityAPI:
         """ Check if dialog modal has error message and dismiss """
         LOG.debug('in check_dialog_modal')
         dialog_modal = await self.get_first_xpath_property \
-                ("//div[@id=\'dialogbox\']",'textContent')
+                ("//div[@id='sys-modal'] \
+                [@aria-labelledby=\'sysModalLabel\']", 'textContent')
         if not dialog_modal:
-            raise IndexError('dialog_modal dialobbox not Found')
+            raise IndexError('dialog_modal id=sys-modal not Found')
 
         if re.search('There was an error loading the coupon', dialog_modal, re.IGNORECASE):
             okay_button_click = await self.page.waitForXPath("//button[@id=\'btn-sys-modal\']")
             LOG.debug('okay_button_click is: %s',okay_button_click._remoteObject['description'])
-            LOG.error('Check dialog screenshot: %s', __fcclipper_user_log_dir__+'/dialog_modal.png')
-            await self.page.screenshot({'path': __fcclipper_user_log_dir__ + '/dialog_modal.png'})
             time.sleep(2)
             await asyncio.gather (
                     self.page.waitForSelector(okay_button_click._remoteObject['description'],\
                             {'hidden': True}),
                     self.page.click(okay_button_click._remoteObject['description']),
                     )
-            # Raise FcclipperInternalException to stop async tasks immediately
-            raise FcclipperInternalException('Dialog Modal for coupon error occurred.', 102)
+            return True
+        return False
 
 
     async def click_coupon_buttons(self, btn):
         """ Click coupon buttons and return index (number of buttons
-            clipped or raise error """
+            clipped), -1 for dialog_modal checked, or raise error """
         LOG.debug("in click_coupon_buttons")
         index = 0
         for index, elem in enumerate(btn, start=1):
@@ -137,24 +126,31 @@ class FoodCityAPI:
             if not self.dry_run:
                 try:
                     await asyncio.gather(
-                        self.check_dialog_modal(),
                         self.page.hover(index_button),
                         self.page.click(index_button),
                         self.page.waitForXPath(f"//span[@id=\'{index_span_cliptxt}\' \
                             and contains(@style, \'display: none\')]"),
                     )
-                    if self.dialog_dismissed:
-                        LOG.debug("Coupon alert dialog was dismissed")
-                        self.dialog_dismissed = False
-                        time.sleep(2)
-                        raise FcclipperInternalException('Coupon alert dialog' \
-                                'pop-up was dismissed', 101)
-                except (asyncio.TimeoutError, FcclipperInternalException) as error:
+                except (asyncio.TimeoutError) as error:
                     self.cli.console.print('(',index-1,') [bold]Coupons successfully ' \
                                    'clipped to your account[/bold]')
-                    LOG.error('\nCaught Exception: %s Processing %s',\
+                    LOG.warning('Caught Exception: %s Processing: %s', \
                          error, index_span_cliptxt)
+                    ts = f"{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}"
+                    LOG.warning('Screenshot png and html located in: %s with '+ \
+                            'timestamp %s in filenames',__fcclipper_user_log_dir__, ts)
+                    await self.page.screenshot({'path': __fcclipper_user_log_dir__ + \
+                            '/coupon_err__png-'+ts+'.png'})
+                    html = await self.page.content()
+                    with open(__fcclipper_user_log_dir__+'/coupon_err_html-'+ \
+                            ts+'.html', "w", encoding="utf-8") as fd:
+                        fd.write(html)
+                    ret = await self.check_dialog_modal()
+                    LOG.warning('return from check dialog is: %s', ret)
+                    if ret:
+                        return -1
                     raise
+
         return index
 
 
@@ -198,12 +194,12 @@ class FoodCityAPI:
                 try:
                     index = await self.click_coupon_buttons(btn)
                 except asyncio.TimeoutError as error:
-                    LOG.debug('Timeout error passed back: %s', error)
+                    LOG.error('asyncio.Timeout error raised: %s', error)
                     break
-                except FcclipperInternalException as error:
-                    LOG.debug('FcclipperInternalException passed back: %s', error)
+
+                if index < 0:
                     num_tries+=1
-                    if num_tries > self.max_retries:
+                    if num_tries > self.max_tries:
                         break
                     continue
 
